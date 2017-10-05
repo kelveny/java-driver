@@ -399,7 +399,8 @@ class Responses {
 
                     MD5Digest resultMetadataId = null;
                     if (flags.contains(Flag.METADATA_CHANGED)) {
-                        assert protocolVersion == ProtocolVersion.V5 : "METADATA_CHANGED flag is supported starting from v5";
+                        assert ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(protocolVersion)
+                                : "METADATA_CHANGED flag is not supported in protocol version " + protocolVersion;
                         assert !flags.contains(Flag.NO_METADATA) : "METADATA_CHANGED and NO_METADATA are mutually exclusive flags";
                         resultMetadataId = MD5Digest.wrap(CBUtil.readBytes(body));
                     }
@@ -527,7 +528,7 @@ class Responses {
                 public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     MD5Digest resultMetadataId = null;
-                    if (version.compareTo(ProtocolVersion.V5) >= 0)
+                    if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(version))
                         resultMetadataId = MD5Digest.wrap(CBUtil.readBytes(body));
                     boolean withPkIndices = version.compareTo(ProtocolVersion.V4) >= 0;
                     Rows.Metadata metadata = Rows.Metadata.decode(body, withPkIndices, version, codecRegistry);

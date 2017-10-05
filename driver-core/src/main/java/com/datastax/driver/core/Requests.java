@@ -183,7 +183,7 @@ class Requests {
             @Override
             public void encode(Execute msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
-                if (version == ProtocolVersion.V5)
+                if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(version))
                     CBUtil.writeBytes(msg.resultMetadataId.bytes, dest);
                 msg.options.encode(dest, version);
             }
@@ -191,7 +191,7 @@ class Requests {
             @Override
             public int encodedSize(Execute msg, ProtocolVersion version) {
                 int size = CBUtil.sizeOfBytes(msg.statementId.bytes);
-                if (version == ProtocolVersion.V5)
+                if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(version))
                     size += CBUtil.sizeOfBytes(msg.resultMetadataId.bytes);
                 size += msg.options.encodedSize(version);
                 return size;

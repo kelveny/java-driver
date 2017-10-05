@@ -81,12 +81,12 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     // if the metadata has changed server-side.
                     columnDefs = r.metadata.columns;
                     if (actualStatement instanceof BoundStatement) {
-                        // r.metadata.metadataId is necessarily present
-                        // if the flag METADATA_CHANGED was set,
-                        // see Responses.Result.Rows.Metadata.decode(),
-                        // unless we are using v1, in which case every ROWS response
-                        // contains full metadata information.
-                        assert protocolVersion == ProtocolVersion.V1 || r.metadata.metadataId != null;
+                        // if it is present, it means either a regular statement (QUERY), or a bound
+                        // statement (EXECUTE) in protocol v1 (we always force SKIP_METADATA for other
+                        // versions), or a bound statement where the metadata has changed server-side
+                        assert protocolVersion == ProtocolVersion.V1 ||
+                                (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(protocolVersion)
+                                        && r.metadata.metadataId != null);
                         BoundStatement bs = ((BoundStatement) actualStatement);
                         // the resultset metadata changed, update the prepared statement accordingly.
                         bs.preparedStatement().getPreparedId().resultSetMetadata = new PreparedId.PreparedMetadata(r.metadata.metadataId, r.metadata.columns);
