@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
+import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -50,7 +51,6 @@ import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
-import com.datastax.oss.driver.api.core.cql.CqlSession;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -250,6 +250,7 @@ class Conversions {
         ByteBuffer.wrap(response.preparedQueryId).asReadOnlyBuffer(),
         request.getQuery(),
         toColumnDefinitions(response.variablesMetadata, context),
+        asList(response.variablesMetadata.pkIndices),
         toColumnDefinitions(response.resultMetadata, context),
         request.getConfigProfileNameForBoundStatements(),
         request.getConfigProfileForBoundStatements(),
@@ -268,6 +269,18 @@ class Conversions {
       definitions.add(new DefaultColumnDefinition(columnSpec, context));
     }
     return DefaultColumnDefinitions.valueOf(definitions.build());
+  }
+
+  private static List<Integer> asList(int[] pkIndices) {
+    if (pkIndices == null || pkIndices.length == 0) {
+      return Collections.emptyList();
+    } else {
+      ImmutableList.Builder<Integer> builder = ImmutableList.builder();
+      for (int pkIndex : pkIndices) {
+        builder.add(pkIndex);
+      }
+      return builder.build();
+    }
   }
 
   static CoordinatorException toThrowable(Node node, Error errorMessage) {
